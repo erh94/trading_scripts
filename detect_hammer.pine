@@ -1,0 +1,68 @@
+//@version=5
+indicator("EMA and Candlestick Patterns", overlay=true)
+
+// Input parameters for engulfing patterns
+length = input.int(10, title="Length")
+mult = input.float(1.5, title="Multiplier")
+min_vol = input.int(1000, title="Minimum Volume")
+
+// Calculate the bullish engulfing condition
+bullish_engulfing = (close[1] < open[1]) and (close > open) and (close > close[1]) and (close > high[1]) and (low < low[1]) and (open < open[1]) and (high > high[1]) and (volume > volume[1])
+
+// Calculate the bearish engulfing condition
+bearish_engulfing = (close[1] > open[1]) and (close < open) and (close < open[1]) and (close < close[1]) and (low < low[1]) and (open > open[1]) and (high > high[1]) and (volume > volume[1])
+
+// Calculate the high volume condition
+high_volume = volume > mult * ta.sma(volume, length)
+
+// Calculate the 9 EMA, 50 EMA, and other EMAs
+ema_5 = ta.ema(close, 5)
+ema_9 = ta.ema(close, 9)
+ema_15 = ta.ema(close, 15)
+ema_50 = ta.ema(close, 50)
+ema_100 = ta.ema(close, 100)
+ema_200 = ta.ema(close, 200)
+
+// Combine the conditions to create the signal for engulfing patterns
+signal_bullish_engulfing = bullish_engulfing
+signal_bearish_engulfing = bearish_engulfing
+
+// Plot the engulfing signals
+plotshape(signal_bullish_engulfing, style=shape.labelup, location=location.belowbar, color=color.green, text="BE", size=size.small)
+plotshape(signal_bearish_engulfing, style=shape.labeldown, location=location.abovebar, color=color.red, text="BE", size=size.small)
+
+// Input parameters for hammer and inverted hammer
+hammer_body_to_total_ratio = input.float(0.55, title="Hammer Body to Total Candle Ratio")
+min_body_size = input.float(0.001, title="Minimum Body Size")
+min_shadow_size = input.float(0.5, title="Minimum Shadow Size")
+open_high_error = input.float(0.15, title="Open-High Margin of Error")
+
+// Calculate body size and shadow size for hammer conditions
+body_size = math.abs(close - open)
+upper_shadow_size = high - math.max(open, close)
+lower_shadow_size = math.min(open, close) - low
+
+// Define conditions for green hammer and red inverted hammer
+green_hammer_condition = (close >= open and body_size <= hammer_body_to_total_ratio * (high - low)) and (body_size >= min_body_size) and (lower_shadow_size >= min_shadow_size * body_size) and (upper_shadow_size < open_high_error * body_size) and (lower_shadow_size > upper_shadow_size) and (volume > volume[1])
+red_inverted_hammer_condition = (close <= open and body_size <= hammer_body_to_total_ratio * (high - low)) and (body_size >= min_body_size) and (upper_shadow_size >= min_shadow_size * body_size) and (lower_shadow_size < open_high_error * body_size) and (upper_shadow_size > lower_shadow_size) and (volume > volume[1])
+
+// Define conditions for red hammer and green inverted hammer
+red_hammer_condition = (close < open and body_size <= hammer_body_to_total_ratio * (high - low)) and (body_size >= min_body_size) and (lower_shadow_size >= min_shadow_size * body_size) and (upper_shadow_size < open_high_error * body_size) and (lower_shadow_size > upper_shadow_size) and (volume > volume[1])
+green_inverted_hammer_condition = (close > open and body_size <= hammer_body_to_total_ratio * (high - low)) and (body_size >= min_body_size) and (upper_shadow_size >= min_shadow_size * body_size) and (lower_shadow_size < open_high_error * body_size) and (upper_shadow_size > lower_shadow_size) and (volume > volume[1])
+
+// Plot hammer and inverted hammer signals
+plotshape(green_hammer_condition, style=shape.triangleup, location=location.belowbar, color=color.lime, size=size.small, title="Green Hammer")
+plotshape(red_inverted_hammer_condition, style=shape.triangledown, location=location.abovebar, color=color.red, size=size.small, title="Red Inverted Hammer")
+plotshape(red_hammer_condition, style=shape.triangleup, location=location.belowbar, color=color.yellow, size=size.small, title="Red Hammer")
+plotshape(green_inverted_hammer_condition, style=shape.triangledown, location=location.abovebar, color=color.maroon, size=size.small, title="Green Inverted Hammer")
+
+// Add alert conditions for bullish engulfing pattern
+alertcondition(signal_bullish_engulfing, title="High Volume Bullish Engulfing", message="A high volume bullish engulfing candle has been identified")
+
+// Plot the EMAs on the chart
+plot(ema_5, color=color.orange, linewidth=1, title="EMA-5", display = display.none)
+plot(ema_9, color=color.purple, linewidth=1, title="EMA-9", display = display.none)
+plot(ema_15, color=color.orange, linewidth=2, title="EMA-15")
+plot(ema_50, color=color.purple, linewidth=2, title="EMA-50")
+plot(ema_100, color=color.teal, linewidth=2, title="EMA-100", display = display.none)
+plot(ema_200, color=color.rgb(230, 241, 75), linewidth=2, title="EMA-200", display = display.none)
