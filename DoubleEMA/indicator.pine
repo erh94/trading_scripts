@@ -1,0 +1,43 @@
+//@version=5
+indicator("Buy & Sell Live Indicator", shorttitle = "[ehr94] Buy and Sell")
+
+fastEMA = input.int(9, title="fastEMA")
+slowEMA = input.int(15, title="slowEMA")
+
+// Calculate EMAs
+ema9 = ta.ema(close, fastEMA)
+ema15 = ta.ema(close, slowEMA)
+
+// Get candle properties
+open_price = open
+close_price = close
+high_price = high
+low_price = low
+
+// Base conditions
+base_condition_sell = ema9 < ema15
+base_condition_buy = ema9 > ema15
+
+// --- Sell Signal Conditions ---
+sell_condition1 = (open_price < ema15) and (high_price >= ema15) and (close_price < ema9)
+sell_condition2 = (open_price > ema15) and (close_price < ema9)
+red_candle = close_price < open_price
+
+// Sell signal logic
+sell_signal_condition = (sell_condition1 or sell_condition2) and red_candle and base_condition_sell
+
+// --- Buy Signal Conditions ---
+buy_condition1 = (open_price > ema15) and (low_price <= ema15) and (close_price > ema9)
+buy_condition2 = (open_price < ema15) and (close_price > ema9)
+green_candle = close_price > open_price
+
+// Buy signal logic
+buy_signal_condition = (buy_condition1 or buy_condition2) and green_candle and base_condition_buy
+
+// --- Plotting ---
+plot(ema9, color=color.blue, linewidth=2, title="Fast EMA")
+plot(ema15, color=color.red, linewidth=2, title="Slow EMA")
+
+// Plot buy and sell markers
+plotshape(buy_signal_condition, style=shape.labelup, location=location.belowbar, color=color.green, text="Buy", size=size.tiny)
+plotshape(sell_signal_condition, style=shape.labeldown, location=location.abovebar, color=color.red, text="Sell", size=size.tiny)
